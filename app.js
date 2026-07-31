@@ -342,16 +342,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Save Image
-    btnSave.addEventListener('click', () => {
+    btnSave.addEventListener('click', async () => {
         if (!imageLoaded) return;
         
         try {
+            const fileName = `photomo_${new Date().getTime()}.png`;
             const dataUrl = mainCanvas.toDataURL('image/png');
+            
+            // Try using Web Share API (Better for Mobile)
+            if (navigator.share) {
+                try {
+                    // Convert DataURL to File object
+                    const res = await fetch(dataUrl);
+                    const blob = await res.blob();
+                    const file = new File([blob], fileName, { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'PhotoMo 이미지 저장',
+                        });
+                        showToast('공유/저장 메뉴가 열렸습니다.');
+                        return; // Exit if share is successful
+                    }
+                } catch (err) {
+                    console.log('Share API failed or was cancelled', err);
+                    // Fallback to normal download
+                }
+            }
+            
+            // Fallback for Desktop or if Share API fails
             const link = document.createElement('a');
-            link.download = `photomo_${new Date().getTime()}.png`;
+            link.download = fileName;
             link.href = dataUrl;
             link.click();
-            showToast('사진이 저장되었습니다.');
+            showToast('사진이 다운로드 폴더에 저장되었습니다.');
         } catch (e) {
             showToast('저장 중 오류가 발생했습니다.');
             console.error(e);
