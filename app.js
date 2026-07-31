@@ -348,12 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
         
         if (currentTool === 'rect') {
-            // Re-render preview without the marching ants borders before baking
+            // Remove marching ants borders before baking
             maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
             maskCtx.fillStyle = 'rgba(0,0,0,1)';
             maskCtx.fillRect(startX, startY, w, h);
-            renderRealtimePreview();
         }
+        
+        // Re-render preview cleanly before baking
+        renderRealtimePreview();
         
         // Bake the UI canvas (which contains the masked mosaic) into main canvas
         mainCtx.drawImage(uiCanvas, 0, 0);
