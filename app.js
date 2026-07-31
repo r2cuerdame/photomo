@@ -370,6 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
             uiCtx.lineTo(currentX, currentY);
             uiCtx.stroke();
             
+            maskCtx.beginPath();
+            maskCtx.moveTo(lastX, lastY);
             maskCtx.lineTo(currentX, currentY);
             maskCtx.stroke();
             
