@@ -6,7 +6,7 @@
     <title>PhotoMo - 프리미엄 모자이크 에디터</title>
     <meta name="description" content="손쉽게 사진에 모자이크를 적용하고 저장하세요.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=1.2">
+    <link rel="stylesheet" href="style.css?v=1.3">
 </head>
 <body>
     <div id="app">
@@ -24,9 +24,11 @@
 
         <!-- Main Editor Area -->
         <main class="editor-container">
-            <div class="canvas-wrapper">
-                <canvas id="main-canvas"></canvas>
-                <canvas id="ui-canvas"></canvas>
+            <div class="canvas-wrapper" id="canvas-wrapper">
+                <div class="canvas-inner" id="canvas-inner">
+                    <canvas id="main-canvas"></canvas>
+                    <canvas id="ui-canvas"></canvas>
+                </div>
                 <div class="empty-state" id="empty-state">
                     <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                     <p>사진을 선택하여 시작하세요</p>
@@ -66,21 +68,22 @@
 
             <div class="toolbar-divider"></div>
 
-            <div class="toolbar-group intensity-group">
-                <label for="intensity">강도: <span id="intensity-val">15</span></label>
-                <input type="range" id="intensity" min="5" max="50" value="15">
-            </div>
+            <div class="toolbar-group intensity-column-group">
+                <div class="intensity-group">
+                    <label for="intensity">강도: <span id="intensity-val">15</span></label>
+                    <input type="range" id="intensity" min="5" max="50" value="15">
+                </div>
 
-            <div class="toolbar-group intensity-group" id="brush-size-container" style="display: none;">
-                <label for="brush-size">굵기: <span id="brush-size-val">30</span></label>
-                <input type="range" id="brush-size" min="5" max="100" value="30">
+                <div class="intensity-group" id="brush-size-container" style="display: none;">
+                    <label for="brush-size">굵기: <span id="brush-size-val">30</span></label>
+                    <input type="range" id="brush-size" min="5" max="100" value="30">
+                </div>
             </div>
             
-            </div>
         </footer>
     </div>
     
     <div id="toast-container"></div>
-    <script src="app.js?v=1.2"></script>
+    <script src="app.js?v=1.3"></script>
 </body>
 </html>

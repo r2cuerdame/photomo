@@ -33,6 +33,21 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentX = 0;
     let currentY = 0;
     
+    // Pan & Zoom State
+    const canvasInner = document.getElementById('canvas-inner');
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let initialPinchDist = null;
+    let initialScale = 1;
+    let lastPanCenter = null;
+    
+    function updateTransform() {
+        canvasInner.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    }
+    
     // Offscreen Mask Canvas
     const maskCanvas = document.createElement('canvas');
     const maskCtx = maskCanvas.getContext('2d');
@@ -111,6 +126,12 @@ document.addEventListener('DOMContentLoaded', () => {
         maskCanvas.height = height;
         
         mainCtx.drawImage(img, 0, 0);
+        
+        // Reset pan and zoom
+        scale = 1;
+        panX = 0;
+        panY = 0;
+        updateTransform();
     }
 
     // Canvas Interaction
@@ -123,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let clientY = evt.clientY;
         
         if (evt.touches && evt.touches.length > 0) {
+            // Get position for drawing (always first touch)
             clientX = evt.touches[0].clientX;
             clientY = evt.touches[0].clientY;
         }
@@ -133,8 +155,42 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    function getPinchDist(e) {
+        return Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+    }
+    
+    function getPinchCenter(e) {
+        return {
+            x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+            y: (e.touches[0].clientY + e.touches[1].clientY) / 2
+        };
+    }
+
     function startDraw(e) {
         if (!imageLoaded) return;
+        
+        // Distinguish drawing vs panning
+        if (e.type.startsWith('touch')) {
+            if (e.touches.length === 2) {
+                if (isDrawing) {
+                    isDrawing = false;
+                    uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
+                }
+                isPanning = true;
+                initialPinchDist = getPinchDist(e);
+                initialScale = scale;
+                lastPanCenter = getPinchCenter(e);
+                return;
+            } else if (e.touches.length > 2) {
+                return;
+            }
+        }
+        
+        if (isPanning) return;
+        
         e.preventDefault(); // Prevent scrolling on touch
         
         const pos = getMousePos(e);
@@ -174,6 +230,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function draw(e) {
+        if (isPanning && e.type.startsWith('touch') && e.touches.length === 2) {
+            e.preventDefault();
+            const currentDist = getPinchDist(e);
+            const currentCenter = getPinchCenter(e);
+            
+            const rect = canvasWrapper.getBoundingClientRect();
+            
+            // Zoom center relative to wrapper
+            const centerWrapperX = currentCenter.x - rect.left;
+            const centerWrapperY = currentCenter.y - rect.top;
+            
+            const scaleFactor = currentDist / initialPinchDist;
+            const newScale = Math.max(0.5, Math.min(initialScale * scaleFactor, 10));
+            
+            const dx = currentCenter.x - lastPanCenter.x;
+            const dy = currentCenter.y - lastPanCenter.y;
+            
+            panX = centerWrapperX - (centerWrapperX - panX) * (newScale / scale) + dx;
+            panY = centerWrapperY - (centerWrapperY - panY) * (newScale / scale) + dy;
+            scale = newScale;
+            
+            lastPanCenter = currentCenter;
+            updateTransform();
+            return;
+        }
+        
         if (!isDrawing) return;
         e.preventDefault();
         
@@ -202,6 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function endDraw(e) {
+        if (isPanning) {
+            if (e.touches && e.touches.length < 2) {
+                isPanning = false;
+            }
+            return;
+        }
+        
         if (!isDrawing) return;
         e.preventDefault();
         isDrawing = false;
@@ -236,6 +325,26 @@ document.addEventListener('DOMContentLoaded', () => {
     uiCanvas.addEventListener('touchmove', draw, { passive: false });
     uiCanvas.addEventListener('touchend', endDraw, { passive: false });
     uiCanvas.addEventListener('touchcancel', endDraw, { passive: false });
+    
+    // Mouse Wheel Zoom
+    canvasWrapper.addEventListener('wheel', (e) => {
+        if (!imageLoaded) return;
+        e.preventDefault();
+        
+        const rect = canvasWrapper.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        const zoomIntensity = 0.1;
+        const wheel = e.deltaY < 0 ? 1 : -1;
+        const newScale = Math.max(0.5, Math.min(scale * Math.exp(wheel * zoomIntensity), 10));
+        
+        panX = mouseX - (mouseX - panX) * (newScale / scale);
+        panY = mouseY - (mouseY - panY) * (newScale / scale);
+        scale = newScale;
+        
+        updateTransform();
+    }, { passive: false });
 
     // Prevent Double-Tap Zoom and Default Context Menu
     document.addEventListener('dblclick', function(event) {
