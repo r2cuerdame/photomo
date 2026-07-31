@@ -134,30 +134,32 @@ body, html {
     max-height: 95%;
     box-shadow: var(--shadow);
     display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
     border-radius: 4px;
 }
 
 .canvas-inner {
     position: relative;
-    width: 100%;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    max-width: 100%;
+    max-height: 100%;
     transform-origin: 0 0;
     transition: transform 0.05s linear;
 }
 
 canvas {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
     touch-action: none;
 }
 
 #main-canvas {
-    z-index: 1;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+    object-fit: contain;
 }
 
 #ui-canvas {

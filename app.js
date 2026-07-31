@@ -112,15 +112,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initCanvas(img) {
-        // Find max size to fit within wrapper while maintaining aspect ratio
-        const wrapper = document.querySelector('.canvas-wrapper');
-        const maxWidth = wrapper.clientWidth || window.innerWidth * 0.95;
-        const maxHeight = wrapper.clientHeight || window.innerHeight * 0.7;
+        const MAX_DIMENSION = 1600;
+        let width = img.width;
+        let height = img.height;
         
-        // We will set the internal resolution to match the image exactly,
-        // CSS will handle scaling it down to fit.
-        const width = img.width;
-        const height = img.height;
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+            const ratio = width / height;
+            if (width > height) {
+                width = MAX_DIMENSION;
+                height = MAX_DIMENSION / ratio;
+            } else {
+                height = MAX_DIMENSION;
+                width = MAX_DIMENSION * ratio;
+            }
+        }
+        
+        width = Math.round(width);
+        height = Math.round(height);
         
         mainCanvas.width = width;
         mainCanvas.height = height;
@@ -131,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mosaicBufferCanvas.width = width;
         mosaicBufferCanvas.height = height;
         
-        mainCtx.drawImage(img, 0, 0);
+        mainCtx.drawImage(img, 0, 0, width, height);
         
         // Reset pan and zoom
         scale = 1;
@@ -161,6 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    let mosaicPattern = null;
+    let lastX = 0;
+    let lastY = 0;
+    
     function generateMosaicBuffer() {
         const w = mainCanvas.width;
         const h = mainCanvas.height;
@@ -176,14 +188,14 @@ document.addEventListener('DOMContentLoaded', () => {
         mosaicBufferCtx.imageSmoothingEnabled = false;
         mosaicBufferCtx.clearRect(0, 0, w, h);
         mosaicBufferCtx.drawImage(smallC, 0, 0, scW, scH, 0, 0, scW * intensity, scH * intensity);
+        
+        mosaicPattern = uiCtx.createPattern(mosaicBufferCanvas, 'no-repeat');
     }
     
-    function renderRealtimePreview() {
+    function renderRealtimePreviewRect(startX, startY, w, h) {
         uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
-        uiCtx.drawImage(mosaicBufferCanvas, 0, 0);
-        uiCtx.globalCompositeOperation = 'destination-in';
-        uiCtx.drawImage(maskCanvas, 0, 0);
-        uiCtx.globalCompositeOperation = 'source-over';
+        uiCtx.fillStyle = mosaicPattern;
+        uiCtx.fillRect(startX, startY, w, h);
     }
 
     function getPinchDist(e) {
@@ -240,6 +252,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTool === 'brush') {
             const size = parseInt(brushSizeInput.value);
             
+            // Setup UI Brush
+            uiCtx.lineCap = 'round';
+            uiCtx.lineJoin = 'round';
+            uiCtx.lineWidth = size;
+            uiCtx.strokeStyle = mosaicPattern;
+            uiCtx.beginPath();
+            uiCtx.moveTo(startX, startY);
+            uiCtx.lineTo(startX, startY);
+            uiCtx.stroke();
+            
             // Setup Mask Brush
             maskCtx.lineCap = 'round';
             maskCtx.lineJoin = 'round';
@@ -250,9 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
             maskCtx.lineTo(startX, startY);
             maskCtx.stroke();
             
-            renderRealtimePreview();
+            lastX = startX;
+            lastY = startY;
         } else if (currentTool === 'rect') {
-            renderRealtimePreview();
+            uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
         }
     }
 
@@ -298,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const h = currentY - startY;
             maskCtx.fillRect(startX, startY, w, h);
             
-            renderRealtimePreview();
+            renderRealtimePreviewRect(startX, startY, w, h);
             
             // Draw high-contrast border on top of mosaic preview
             uiCtx.lineWidth = 3;
@@ -315,10 +338,16 @@ document.addEventListener('DOMContentLoaded', () => {
             
             uiCtx.setLineDash([]); // Reset line dash
         } else if (currentTool === 'brush') {
+            uiCtx.beginPath();
+            uiCtx.moveTo(lastX, lastY);
+            uiCtx.lineTo(currentX, currentY);
+            uiCtx.stroke();
+            
             maskCtx.lineTo(currentX, currentY);
             maskCtx.stroke();
             
-            renderRealtimePreview();
+            lastX = currentX;
+            lastY = currentY;
         }
     }
 
@@ -352,10 +381,10 @@ document.addEventListener('DOMContentLoaded', () => {
             maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
             maskCtx.fillStyle = 'rgba(0,0,0,1)';
             maskCtx.fillRect(startX, startY, w, h);
+            
+            // Re-render preview cleanly before baking
+            renderRealtimePreviewRect(startX, startY, w, h);
         }
-        
-        // Re-render preview cleanly before baking
-        renderRealtimePreview();
         
         // Bake the UI canvas (which contains the masked mosaic) into main canvas
         mainCtx.drawImage(uiCanvas, 0, 0);
