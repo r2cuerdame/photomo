@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnRedo = document.getElementById('btn-redo');
     const btnSave = document.getElementById('btn-save');
     const btnCompare = document.getElementById('btn-compare');
-    const btnReset = document.getElementById('btn-reset');
     const fileMain = document.getElementById('file-upload-main');
     const fileToolbar = document.getElementById('file-upload-toolbar');
     const emptyState = document.getElementById('empty-state');
@@ -73,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 emptyState.classList.add('hidden');
                 btnSave.disabled = false;
                 btnCompare.disabled = false;
-                btnReset.disabled = false;
                 
                 showToast('사진을 불러왔습니다.');
             };
@@ -332,14 +330,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCompare.addEventListener('touchstart', (e) => { e.preventDefault(); showOriginal(); }, { passive: false });
     btnCompare.addEventListener('touchend', (e) => { e.preventDefault(); hideOriginal(); }, { passive: false });
     btnCompare.addEventListener('touchcancel', hideOriginal);
-
-    // Reset Image
-    btnReset.addEventListener('click', () => {
-        if (!imageLoaded || !originalImage) return;
-        saveState(); // Save state before resetting so user can undo the reset
-        mainCtx.drawImage(originalImage, 0, 0, mainCanvas.width, mainCanvas.height);
-        showToast('사진이 초기화되었습니다.');
-    });
 
     // Save Image
     btnSave.addEventListener('click', async () => {
