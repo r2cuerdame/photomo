@@ -82,6 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 emptyState.classList.add('hidden');
                 btnSave.disabled = false;
+                btnCompare.classList.remove('hidden');
                 btnCompare.disabled = false;
                 
                 showToast('사진을 불러왔습니다.');

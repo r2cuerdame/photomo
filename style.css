@@ -180,6 +180,23 @@ canvas {
     margin-top: 10px;
 }
 
+.floating-compare-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 5;
+    background: rgba(25, 28, 35, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    width: 48px;
+    height: 48px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color);
+}
+.floating-compare-btn:hover {
+    background: rgba(40, 44, 52, 0.9);
+}
+
 .toolbar {
     height: 70px;
     background: var(--panel-bg);
