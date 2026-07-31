@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const toolBtns = document.querySelectorAll('.tool-btn');
     const intensityInput = document.getElementById('intensity');
     const intensityVal = document.getElementById('intensity-val');
+    const brushSizeInput = document.getElementById('brush-size');
+    const brushSizeVal = document.getElementById('brush-size-val');
+    const brushSizeContainer = document.getElementById('brush-size-container');
     
     // State
     let originalImage = null;
@@ -40,12 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
             toolBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             currentTool = btn.dataset.tool;
+            if (currentTool === 'brush') {
+                brushSizeContainer.style.display = 'flex';
+            } else {
+                brushSizeContainer.style.display = 'none';
+            }
         });
     });
 
-    // Intensity Change
+    // Intensity & Size Change
     intensityInput.addEventListener('input', (e) => {
         intensityVal.textContent = e.target.value;
+    });
+    brushSizeInput.addEventListener('input', (e) => {
+        brushSizeVal.textContent = e.target.value;
     });
 
     // File Upload Handlers
@@ -137,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
         
         if (currentTool === 'brush') {
-            const size = parseInt(intensityInput.value) * 2;
+            const size = parseInt(brushSizeInput.value);
             
             // Setup UI Brush
             uiCtx.lineCap = 'round';
