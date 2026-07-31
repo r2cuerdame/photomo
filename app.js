@@ -141,12 +141,39 @@ document.addEventListener('DOMContentLoaded', () => {
         
         mainCtx.drawImage(img, 0, 0, width, height);
         
+        resizeCanvasInner();
+        
         // Reset pan and zoom
         scale = 1;
         panX = 0;
         panY = 0;
         updateTransform();
     }
+    
+    function resizeCanvasInner() {
+        if (!imageLoaded) return;
+        const wrapper = document.querySelector('.canvas-wrapper');
+        const wrapperW = wrapper.clientWidth;
+        const wrapperH = wrapper.clientHeight;
+        
+        const imgRatio = mainCanvas.width / mainCanvas.height;
+        const wrapperRatio = wrapperW / wrapperH;
+        
+        let displayW, displayH;
+        if (imgRatio > wrapperRatio) {
+            displayW = wrapperW;
+            displayH = wrapperW / imgRatio;
+        } else {
+            displayH = wrapperH;
+            displayW = wrapperH * imgRatio;
+        }
+        
+        const canvasInner = document.getElementById('canvas-inner');
+        canvasInner.style.width = displayW + 'px';
+        canvasInner.style.height = displayH + 'px';
+    }
+    
+    window.addEventListener('resize', resizeCanvasInner);
 
     // Canvas Interaction
     function getMousePos(evt) {
@@ -381,13 +408,19 @@ document.addEventListener('DOMContentLoaded', () => {
             maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
             maskCtx.fillStyle = 'rgba(0,0,0,1)';
             maskCtx.fillRect(startX, startY, w, h);
-            
-            // Re-render preview cleanly before baking
-            renderRealtimePreviewRect(startX, startY, w, h);
         }
         
-        // Bake the UI canvas (which contains the masked mosaic) into main canvas
-        mainCtx.drawImage(uiCanvas, 0, 0);
+        // Bake the mosaic using maskCanvas to ensure robust compositing
+        const finalC = document.createElement('canvas');
+        finalC.width = mainCanvas.width;
+        finalC.height = mainCanvas.height;
+        const fCtx = finalC.getContext('2d');
+        
+        fCtx.drawImage(maskCanvas, 0, 0);
+        fCtx.globalCompositeOperation = 'source-in';
+        fCtx.drawImage(mosaicBufferCanvas, 0, 0);
+        
+        mainCtx.drawImage(finalC, 0, 0);
         
         uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
     }
