@@ -227,6 +227,21 @@ document.addEventListener('DOMContentLoaded', () => {
     uiCanvas.addEventListener('touchend', endDraw, { passive: false });
     uiCanvas.addEventListener('touchcancel', endDraw, { passive: false });
 
+    // Prevent Double-Tap Zoom and Default Context Menu
+    document.addEventListener('dblclick', function(event) {
+        event.preventDefault();
+    }, { passive: false });
+    
+    // Prevent zooming on iOS Safari when double tapping
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+
     // Mosaic Application
     function applyMosaic() {
         const w = mainCanvas.width;
