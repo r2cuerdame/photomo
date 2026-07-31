@@ -265,15 +265,26 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (currentTool === 'rect') {
             uiCtx.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
-            uiCtx.fillStyle = 'rgba(99, 102, 241, 0.2)';
-            uiCtx.strokeStyle = 'rgba(99, 102, 241, 0.8)';
-            uiCtx.lineWidth = 2;
+            uiCtx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+            uiCtx.strokeStyle = '#ffffff'; // Bright white
+            uiCtx.lineWidth = 3;
+            uiCtx.setLineDash([8, 8]); // Dashed line for better visibility
             
             const w = currentX - startX;
             const h = currentY - startY;
             
             uiCtx.fillRect(startX, startY, w, h);
+            
+            // Draw a dark border under the white one for high contrast
+            uiCtx.strokeStyle = '#000000';
+            uiCtx.lineDashOffset = 8;
             uiCtx.strokeRect(startX, startY, w, h);
+            
+            uiCtx.strokeStyle = '#ffffff';
+            uiCtx.lineDashOffset = 0;
+            uiCtx.strokeRect(startX, startY, w, h);
+            
+            uiCtx.setLineDash([]); // Reset line dash
         } else if (currentTool === 'brush') {
             uiCtx.lineTo(currentX, currentY);
             uiCtx.stroke();
